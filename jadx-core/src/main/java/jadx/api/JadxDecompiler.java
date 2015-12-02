@@ -141,7 +141,7 @@ public final class JadxDecompiler {
 		save(false, true);
 	}
 
-	public void save(boolean saveSources, boolean saveResources) {
+	private void save(boolean saveSources, boolean saveResources) {
 		try {
 			ExecutorService ex = getSaveExecutor(saveSources, saveResources);
 			ex.shutdown();
