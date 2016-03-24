@@ -1,5 +1,7 @@
 package jadx.cli;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import jadx.api.IJadxArgs;
 import jadx.api.JadxDecompiler;
 import jadx.core.utils.exceptions.JadxException;
@@ -15,6 +17,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -31,9 +34,6 @@ public class JadxCLIArgs implements IJadxArgs {
 	@Parameter(names = {"-j", "--threads-count"}, description = "processing threads count")
 	protected int threadsCount = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
 
-	@Parameter(names = {"-f", "--fallback"}, description = "make simple dump (using goto instead of 'if', 'for', etc)")
-	protected boolean fallbackMode = false;
-
 	@Parameter(names = {"-r", "--no-res"}, description = "do not decode resources")
 	protected boolean skipResources = false;
 
@@ -43,14 +43,12 @@ public class JadxCLIArgs implements IJadxArgs {
 	@Parameter(names = {"--show-bad-code"}, description = "show inconsistent code (incorrectly decompiled)")
 	protected boolean showInconsistentCode = false;
 
-	@Parameter(names = {"--cfg"}, description = "save methods control flow graph to dot file")
-	protected boolean cfgOutput = false;
+	@Parameter(names = "--no-replace-consts", converter = InvertedBooleanConverter.class,
+			description = "don't replace constant value with matching constant field")
+	protected boolean replaceConsts = true;
 
-	@Parameter(names = {"--raw-cfg"}, description = "save methods control flow graph (use raw instructions)")
-	protected boolean rawCfgOutput = false;
-
-	@Parameter(names = {"-v", "--verbose"}, description = "verbose output")
-	protected boolean verbose = false;
+	@Parameter(names = {"--escape-unicode"}, description = "escape non latin characters in strings (with \\u)")
+	protected boolean escapeUnicode = false;
 
 	@Parameter(names = {"--deobf"}, description = "activate deobfuscation")
 	protected boolean deobfuscationOn = false;
@@ -66,6 +64,18 @@ public class JadxCLIArgs implements IJadxArgs {
 
 	@Parameter(names = {"--deobf-use-sourcename"}, description = "use source file name as class name alias")
 	protected boolean deobfuscationUseSourceNameAsAlias = false;
+
+	@Parameter(names = {"--cfg"}, description = "save methods control flow graph to dot file")
+	protected boolean cfgOutput = false;
+
+	@Parameter(names = {"--raw-cfg"}, description = "save methods control flow graph (use raw instructions)")
+	protected boolean rawCfgOutput = false;
+
+	@Parameter(names = {"-f", "--fallback"}, description = "make simple dump (using goto instead of 'if', 'for', etc)")
+	protected boolean fallbackMode = false;
+
+	@Parameter(names = {"-v", "--verbose"}, description = "verbose output")
+	protected boolean verbose = false;
 
 	@Parameter(names = {"-h", "--help"}, description = "print this help", help = true)
 	protected boolean printHelp = false;
@@ -117,7 +127,10 @@ public class JadxCLIArgs implements IJadxArgs {
 				ch.qos.logback.classic.Logger rootLogger =
 						(ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 				// remove INFO ThresholdFilter
-				rootLogger.getAppender("STDOUT").clearAllFilters();
+				Appender<ILoggingEvent> appender = rootLogger.getAppender("STDOUT");
+				if (appender != null) {
+					appender.clearAllFilters();
+				}
 			}
 		} catch (JadxException e) {
 			System.err.println("ERROR: " + e.getMessage());
@@ -167,6 +180,13 @@ public class JadxCLIArgs implements IJadxArgs {
 	private static void addSpaces(StringBuilder str, int count) {
 		for (int i = 0; i < count; i++) {
 			str.append(' ');
+		}
+	}
+
+	public static class InvertedBooleanConverter implements IStringConverter<Boolean> {
+		@Override
+		public Boolean convert(String value) {
+			return "false".equals(value);
 		}
 	}
 
@@ -250,5 +270,15 @@ public class JadxCLIArgs implements IJadxArgs {
 	@Override
 	public boolean useSourceNameAsClassAlias() {
 		return deobfuscationUseSourceNameAsAlias;
+	}
+
+	@Override
+	public boolean escapeUnicode() {
+		return escapeUnicode;
+	}
+
+	@Override
+	public boolean isReplaceConsts() {
+		return replaceConsts;
 	}
 }

@@ -31,7 +31,6 @@ public class JadxSettings extends JadxCLIArgs {
 	private boolean checkForUpdates = true;
 	private List<String> recentFiles = new ArrayList<String>();
 	private String fontStr = "";
-	private boolean useFastSearch = false;
 	private boolean autoStartJobs = true;
 
 	private Map<String, WindowLocation> windowPos = new HashMap<String, WindowLocation>();
@@ -165,13 +164,12 @@ public class JadxSettings extends JadxCLIArgs {
 		this.deobfuscationUseSourceNameAsAlias = useSourceNameAsAlias;
 	}
 
-	public boolean isUseFastSearch() {
-		return false;
-//		return useFastSearch;
+	public void setEscapeUnicode(boolean escapeUnicode) {
+		this.escapeUnicode = escapeUnicode;
 	}
 
-	public void setUseFastSearch(boolean useFastSearch) {
-		this.useFastSearch = useFastSearch;
+	public void setReplaceConsts(boolean replaceConsts) {
+		this.replaceConsts = replaceConsts;
 	}
 
 	public boolean isAutoStartJobs() {

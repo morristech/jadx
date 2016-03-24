@@ -6,9 +6,12 @@ import jadx.api.ResourceType;
 import jadx.api.ResourcesLoader;
 import jadx.core.clsp.ClspGraph;
 import jadx.core.dex.info.ClassInfo;
+import jadx.core.dex.info.ConstStorage;
 import jadx.core.utils.ErrorsCounter;
+import jadx.core.utils.StringUtils;
 import jadx.core.utils.exceptions.DecodeException;
 import jadx.core.utils.exceptions.JadxException;
+import jadx.core.utils.files.DexFile;
 import jadx.core.utils.files.InputFile;
 import jadx.core.xmlgen.ResContainer;
 import jadx.core.xmlgen.ResTableParser;
@@ -17,9 +20,7 @@ import jadx.core.xmlgen.ResourceStorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -30,9 +31,10 @@ public class RootNode {
 
 	private final ErrorsCounter errorsCounter = new ErrorsCounter();
 	private final IJadxArgs args;
+	private final StringUtils stringUtils;
+	private final ConstStorage constValues;
 
 	private List<DexNode> dexNodes;
-	private Map<Integer, String> resourcesNames = new HashMap<Integer, String>();
 	@Nullable
 	private String appPackage;
 	private ClassNode appResClass;
@@ -40,18 +42,22 @@ public class RootNode {
 
 	public RootNode(IJadxArgs args) {
 		this.args = args;
+		this.stringUtils = new StringUtils(args);
+		this.constValues = new ConstStorage(args);
 	}
 
-	public void load(List<InputFile> dexFiles) throws DecodeException {
-		dexNodes = new ArrayList<DexNode>(dexFiles.size());
-		for (InputFile dex : dexFiles) {
-			DexNode dexNode;
-			try {
-				dexNode = new DexNode(this, dex);
-			} catch (Exception e) {
-				throw new DecodeException("Error decode file: " + dex, e);
+	public void load(List<InputFile> inputFiles) throws DecodeException {
+		dexNodes = new ArrayList<DexNode>();
+		for (InputFile input : inputFiles) {
+			for (DexFile dexFile : input.getDexFiles()) {
+				try {
+					LOG.debug("Load: {}", dexFile);
+					DexNode dexNode = new DexNode(this, dexFile);
+					dexNodes.add(dexNode);
+				} catch (Exception e) {
+					throw new DecodeException("Error decode file: " + dexFile, e);
+				}
 			}
-			dexNodes.add(dexNode);
 		}
 		for (DexNode dexNode : dexNodes) {
 			dexNode.loadClasses();
@@ -86,7 +92,7 @@ public class RootNode {
 		}
 
 		ResourceStorage resStorage = parser.getResStorage();
-		resourcesNames = resStorage.getResourcesNames();
+		constValues.setResourcesNames(resStorage.getResourcesNames());
 		appPackage = resStorage.getAppPackage();
 	}
 
@@ -175,10 +181,6 @@ public class RootNode {
 		return errorsCounter;
 	}
 
-	public Map<Integer, String> getResourcesNames() {
-		return resourcesNames;
-	}
-
 	@Nullable
 	public String getAppPackage() {
 		return appPackage;
@@ -190,5 +192,13 @@ public class RootNode {
 
 	public IJadxArgs getArgs() {
 		return args;
+	}
+
+	public StringUtils getStringUtils() {
+		return stringUtils;
+	}
+
+	public ConstStorage getConstValues() {
+		return constValues;
 	}
 }
