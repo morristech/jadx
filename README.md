@@ -1,25 +1,14 @@
-## JADX
+> This is a fork of [**skylot/jadx**](https://github.com/skylot/jadx) that has been modified to be used in [**Show Java**](https://github.com/niranjan94-show-java) - a java decompiler for android. If you're searching for jadx, i suggest you head over to [github.com/skylot/jadx](<https://github.com/skylot/jadx>).
 
-[![Build Status](https://travis-ci.org/skylot/jadx.png?branch=master)](https://travis-ci.org/skylot/jadx)
-[![Build Status](https://drone.io/github.com/skylot/jadx/status.png)](https://drone.io/github.com/skylot/jadx/latest)
-[![Coverage Status](https://coveralls.io/repos/skylot/jadx/badge.png)](https://coveralls.io/r/skylot/jadx)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/2166/badge.svg)](https://scan.coverity.com/projects/2166)
-[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+#### JADX (modified for use with Show Java)
 
-**jadx** - Dex to Java decompiler
+JADX is a Dex to Java decompiler
 
 Command line and GUI tools for produce Java source code from Android Dex and Apk files
 
-![jadx-gui screenshot](http://skylot.github.io/jadx/jadx-gui.png)
 
-### Downloads
-- [unstable](https://drone.io/github.com/skylot/jadx/files)
-- from [github](https://github.com/skylot/jadx/releases)
-- from [sourceforge](http://sourceforge.net/projects/jadx/files/)
-
-
-### Building from source
-    git clone https://github.com/skylot/jadx.git
+#### Building from source
+    git clone https://github.com/niranjan94/jadx.git
     cd jadx
     ./gradlew dist
 
@@ -29,7 +18,7 @@ Scripts for run jadx will be placed in `build/jadx/bin`
 and also packed to `build/jadx-<version>.zip`
 
 
-### Run
+#### Run
 Run **jadx** on itself:
 
     cd build/jadx/
@@ -38,7 +27,7 @@ Run **jadx** on itself:
     bin/jadx-gui lib/jadx-core-*.jar
 
 
-### Usage
+#### Usage
 ```
 jadx[-gui] [options] <input file> (.dex, .apk, .jar or .class)
 options:
@@ -64,7 +53,7 @@ Example:
  jadx -d out classes.dex
 ```
 
-### Troubleshooting
+#### Troubleshooting
 ##### Out of memory error:
   - Reduce processing threads count (`-j` option)
   - Increase maximum java heap size:
@@ -74,20 +63,12 @@ Example:
       `DEFAULT_JVM_OPTS="-Xmx2500M"`
 
 
-### Contribution
-
-To support this project you can:
-  - Post thoughts about new features/optimizations that important to you
-  - Submit bug using one of following patterns:
-    * Java code examples which decompiles incorrectly
-    * Error log and link to _public available_ apk file or app page on Google play
-
-And any other comments will be very helpfull,
-because at current stage of development it is very time consuming
-to **find** new bugs, design and implement new features.
-Also I need to **prioritize** these task for complete most important at first.
-
 ---------------------------------------
-*Licensed under the Apache 2.0 License*
+```
+Licensed under the Apache 2.0 License
+Copyright 2015 by Skylot
+```
 
-*Copyright 2015 by Skylot*
+```
+Modifications by Niranjan
+````
