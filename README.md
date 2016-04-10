@@ -1,4 +1,4 @@
-> This is a fork of [**skylot/jadx**](https://github.com/skylot/jadx) that has been modified to be used in [**Show Java**](https://github.com/niranjan94-show-java) - a java decompiler for android. If you're searching for jadx, i suggest you head over to [github.com/skylot/jadx](<https://github.com/skylot/jadx>).
+> This is a fork of [**skylot/jadx**](https://github.com/skylot/jadx) that has been modified to be used in [**Show Java**](https://github.com/niranjan94/show-java) - a java decompiler for android. If you're searching for jadx, i suggest you head over to [github.com/skylot/jadx](<https://github.com/skylot/jadx>).
 
 #### JADX (modified for use with Show Java)
 
