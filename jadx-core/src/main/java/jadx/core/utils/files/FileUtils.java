@@ -3,13 +3,24 @@ package jadx.core.utils.files;
 import jadx.core.utils.exceptions.JadxRuntimeException;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FileUtils {
+	private static final Logger LOG = LoggerFactory.getLogger(FileUtils.class);
+
+	public static final int READ_BUFFER_SIZE = 8 * 1024;
+	private static final int MAX_FILENAME_LENGTH = 128;
 
 	private FileUtils() {
 	}
@@ -20,21 +31,12 @@ public class FileUtils {
 			JarEntry entry = new JarEntry(entryName);
 			entry.setTime(source.lastModified());
 			jar.putNextEntry(entry);
-			in = new BufferedInputStream(new FileInputStream(source));
 
-			byte[] buffer = new byte[8192];
-			while (true) {
-				int count = in.read(buffer);
-				if (count == -1) {
-					break;
-				}
-				jar.write(buffer, 0, count);
-			}
+			in = new BufferedInputStream(new FileInputStream(source));
+			copyStream(in, jar);
 			jar.closeEntry();
 		} finally {
-			if (in != null) {
-				in.close();
-			}
+			close(in);
 		}
 	}
 
@@ -58,5 +60,44 @@ public class FileUtils {
 			throw new JadxRuntimeException("Failed to create temp file with suffix: " + suffix);
 		}
 		return temp;
+	}
+
+	public static void copyStream(InputStream input, OutputStream output) throws IOException {
+		byte[] buffer = new byte[READ_BUFFER_SIZE];
+		while (true) {
+			int count = input.read(buffer);
+			if (count == -1) {
+				break;
+			}
+			output.write(buffer, 0, count);
+		}
+	}
+
+	public static void close(Closeable c) {
+		if (c == null) {
+			return;
+		}
+		try {
+			c.close();
+		} catch (IOException e) {
+			LOG.error("Close exception for {}", c, e);
+		}
+	}
+
+	@NotNull
+	public static File prepareFile(File file) {
+		String name = file.getName();
+		if (name.length() > MAX_FILENAME_LENGTH) {
+			int dotIndex = name.indexOf('.');
+			int cutAt = MAX_FILENAME_LENGTH - name.length() + dotIndex - 1;
+			if (cutAt <= 0) {
+				name = name.substring(0, MAX_FILENAME_LENGTH - 1);
+			} else {
+				name = name.substring(0, cutAt) + name.substring(dotIndex);
+			}
+			file = new File(file.getParentFile(), name);
+		}
+		makeDirsForFile(file);
+		return file;
 	}
 }

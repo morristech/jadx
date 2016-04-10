@@ -1,5 +1,6 @@
 package jadx.gui.ui;
 
+import jadx.api.ResourceFile;
 import jadx.gui.JadxWrapper;
 import jadx.gui.jobs.BackgroundWorker;
 import jadx.gui.jobs.DecompileJob;
@@ -88,6 +89,7 @@ public class MainWindow extends JFrame {
 
 	private static final ImageIcon ICON_OPEN = Utils.openIcon("folder");
 	private static final ImageIcon ICON_SAVE_ALL = Utils.openIcon("disk_multiple");
+	private static final ImageIcon ICON_EXPORT = Utils.openIcon("database_save");
 	private static final ImageIcon ICON_CLOSE = Utils.openIcon("cross");
 	private static final ImageIcon ICON_SYNC = Utils.openIcon("sync");
 	private static final ImageIcon ICON_FLAT_PKG = Utils.openIcon("empty_logical_package_obj");
@@ -139,7 +141,7 @@ public class MainWindow extends JFrame {
 		setLocationAndPosition();
 		setVisible(true);
 		setLocationRelativeTo(null);
-		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
 		if (settings.getInput().isEmpty()) {
 			openFile();
@@ -169,7 +171,7 @@ public class MainWindow extends JFrame {
 	public void openFile() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setAcceptAllFileFilterUsed(true);
-		String[] exts = {"apk", "dex", "jar", "class", "zip"};
+		String[] exts = {"apk", "dex", "jar", "class", "zip", "aar"};
 		String description = "supported files: " + Arrays.toString(exts).replace('[', '(').replace(']', ')');
 		fileChooser.setFileFilter(new FileNameExtensionFilter(description, exts));
 		fileChooser.setToolTipText(NLS.str("file.open"));
@@ -231,7 +233,13 @@ public class MainWindow extends JFrame {
 		}
 	}
 
-	private void saveAll() {
+	private void saveAll(boolean export) {
+		settings.setExportAsGradleProject(export);
+		if (export) {
+			settings.setSkipSources(false);
+			settings.setSkipResources(false);
+		}
+
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		fileChooser.setToolTipText(NLS.str("file.save_all_msg"));
@@ -245,7 +253,7 @@ public class MainWindow extends JFrame {
 		if (ret == JFileChooser.APPROVE_OPTION) {
 			settings.setLastSaveFilePath(fileChooser.getCurrentDirectory().getPath());
 			ProgressMonitor progressMonitor = new ProgressMonitor(mainPanel, NLS.str("msg.saving_sources"), "", 0, 100);
-			progressMonitor.setMillisToPopup(500);
+			progressMonitor.setMillisToPopup(0);
 			wrapper.saveAll(fileChooser.getSelectedFile(), progressMonitor);
 		}
 	}
@@ -296,11 +304,11 @@ public class MainWindow extends JFrame {
 			Object obj = tree.getLastSelectedPathComponent();
 			if (obj instanceof JResource) {
 				JResource res = (JResource) obj;
-				if (res.getContent() != null) {
-					tabbedPane.codeJump(new Position(res, res.getLine()));
+				ResourceFile resFile = res.getResFile();
+				if (resFile != null && JResource.isSupportedForView(resFile.getType())) {
+					tabbedPane.showResource(res);
 				}
-			}
-			if (obj instanceof JNode) {
+			} else if (obj instanceof JNode) {
 				JNode node = (JNode) obj;
 				JClass cls = node.getRootClass();
 				if (cls != null) {
@@ -350,11 +358,20 @@ public class MainWindow extends JFrame {
 		Action saveAllAction = new AbstractAction(NLS.str("file.save_all"), ICON_SAVE_ALL) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveAll();
+				saveAll(false);
 			}
 		};
 		saveAllAction.putValue(Action.SHORT_DESCRIPTION, NLS.str("file.save_all"));
 		saveAllAction.putValue(Action.ACCELERATOR_KEY, getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
+
+		Action exportAction = new AbstractAction(NLS.str("file.export_gradle"), ICON_EXPORT) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				saveAll(true);
+			}
+		};
+		exportAction.putValue(Action.SHORT_DESCRIPTION, NLS.str("file.export_gradle"));
+		exportAction.putValue(Action.ACCELERATOR_KEY, getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
 
 		JMenu recentFiles = new JMenu(NLS.str("menu.recent_files"));
 		recentFiles.addMenuListener(new RecentFilesMenuListener(recentFiles));
@@ -466,6 +483,7 @@ public class MainWindow extends JFrame {
 		file.setMnemonic(KeyEvent.VK_F);
 		file.add(openAction);
 		file.add(saveAllAction);
+		file.add(exportAction);
 		file.addSeparator();
 		file.add(recentFiles);
 		file.addSeparator();
@@ -522,6 +540,7 @@ public class MainWindow extends JFrame {
 		toolbar.setFloatable(false);
 		toolbar.add(openAction);
 		toolbar.add(saveAllAction);
+		toolbar.add(exportAction);
 		toolbar.addSeparator();
 		toolbar.add(syncAction);
 		toolbar.add(flatPkgButton);

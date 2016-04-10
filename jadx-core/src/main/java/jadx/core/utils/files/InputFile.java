@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import com.android.dex.Dex;
 
+import static jadx.core.utils.files.FileUtils.close;
+
 public class InputFile {
 	private static final Logger LOG = LoggerFactory.getLogger(InputFile.class);
 
@@ -96,14 +98,14 @@ public class InputFile {
 					try {
 						IOUtils.copy(inputStream, fos);
 					} finally {
-						fos.close();
+						close(fos);
 					}
 					addDexFile(entryName, loadFromJar(jarFile));
 				} else {
 					throw new JadxRuntimeException("Unexpected extension in zip: " + ext);
 				}
 			} finally {
-				inputStream.close();
+				close(inputStream);
 			}
 			index++;
 			if (index == 1) {
@@ -121,7 +123,8 @@ public class InputFile {
 			byte[] ba = j2d.convert(jarFile.getAbsolutePath());
 			if (ba.length == 0) {
 				throw new JadxException(j2d.isError() ? j2d.getDxErrors() : "Empty dx output");
-			} else if (j2d.isError()) {
+			}
+			if (j2d.isError()) {
 				LOG.warn("dx message: {}", j2d.getDxErrors());
 			}
 			return new Dex(ba);
@@ -143,12 +146,8 @@ public class InputFile {
 			}
 			FileUtils.addFileToJar(jo, file, clsName + ".class");
 		} finally {
-			if (jo != null) {
-				jo.close();
-			}
-			if (out != null) {
-				out.close();
-			}
+			close(jo);
+			close(out);
 		}
 		return loadFromJar(outFile);
 	}
